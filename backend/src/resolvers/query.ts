@@ -1,4 +1,5 @@
 import { supabase } from '../db/supabase';
+import { getRouteReadiness } from '../services/routeService';
 
 export const Query = {
   bikes: async (_: unknown, args: { bikeType?: string }) => {
@@ -30,8 +31,7 @@ export const Query = {
     _: unknown,
     args: { startPlace: string; endPlace: string; bikeType?: string }
   ) => {
-    // TODO: implement full resolver (geocode → route → weather + traffic + hazards → score → POIs)
-    throw new Error(`routeReadiness not yet implemented (start=${args.startPlace}, end=${args.endPlace})`);
+    return getRouteReadiness(args.startPlace, args.endPlace, args.bikeType);
   },
 
   rideSuggestions: async (

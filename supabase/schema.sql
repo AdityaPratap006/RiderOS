@@ -154,6 +154,7 @@ alter table bike_types              enable row level security;
 alter table bike_type_route_fit     enable row level security;
 alter table favorites               enable row level security;
 alter table garage                  enable row level security;
+alter table raw_posts               enable row level security;
 alter table rides                   enable row level security;
 alter table hazard_reports          enable row level security;
 alter table user_hazard_submissions enable row level security;
