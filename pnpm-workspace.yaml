@@ -1,0 +1,8 @@
+packages:
+  - 'frontend'
+  - 'backend'
+  - 'shared'
+
+onlyBuiltDependencies:
+  - '@apollo/protobufjs'
+  - esbuild

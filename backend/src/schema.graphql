@@ -1,0 +1,92 @@
+scalar JSON
+
+enum BikeType {
+  SUPERSPORT
+  SPORT_NAKED
+  ADVENTURE_TOURER_OFFROAD
+  ADVENTURE_TOURER_HIGHWAY
+  COMMUTER
+  SUPERMOTO
+  ENDURO
+  CRUISER
+  NEO_RETRO
+  SCRAMBLER
+  HYPER_TOURER
+}
+
+type Bike {
+  id: ID!
+  name: String!
+  brand: String!
+  bikeType: BikeType!
+  specs: JSON
+  imageUrl: String
+  dealerUrl: String
+}
+
+type Ride {
+  id: ID!
+  title: String!
+  startLocation: String
+  endLocation: String
+  routeText: String
+  rideDate: String
+  notes: String
+  lat: Float
+  lng: Float
+  sourceUrl: String!
+}
+
+type Factor {
+  score: Int!
+  note: String!
+}
+
+type HazardReport {
+  id: ID!
+  hazardType: String!
+  severity: String!
+  lat: Float!
+  lng: Float!
+  description: String!
+  reportedAt: String!
+}
+
+type BikeSuggestion {
+  bikeType: BikeType!
+  reason: String!
+}
+
+type PointOfInterest {
+  name: String!
+  type: String!
+  lat: Float!
+  lng: Float!
+  rating: Float
+  reason: String
+}
+
+type RouteReadiness {
+  overallStatus: String!
+  summary: String!
+  weather: Factor!
+  hazards: Factor!
+  traffic: Factor!
+  hazardReports: [HazardReport!]!
+  suggestedBikeType: BikeSuggestion!
+  routeGeometry: JSON!
+  pointsOfInterest: [PointOfInterest!]!
+}
+
+type Query {
+  bikes(bikeType: BikeType): [Bike!]!
+  bike(id: ID!): Bike
+  rides(region: String, fromDate: String, toDate: String): [Ride!]!
+  routeReadiness(startPlace: String!, endPlace: String!, bikeType: BikeType): RouteReadiness!
+  rideSuggestions(lat: Float!, lng: Float!, bikeType: BikeType, date: String): [RouteReadiness!]!
+}
+
+type Mutation {
+  submitHazardReport(lat: Float!, lng: Float!, hazardType: String!, description: String!): HazardReport!
+  toggleFavorite(bikeId: ID!): Boolean!
+}

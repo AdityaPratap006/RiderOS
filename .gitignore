@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+.env.local
+.DS_Store
+*.tsbuildinfo
+frontend/.vite/
+frontend/dist/
+backend/dist/
+shared/src/generated.ts
