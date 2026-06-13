@@ -1,6 +1,8 @@
-export const HUDPanel = ({ children}: React.PropsWithChildren) => {
+export const HUDPanel = ({ children, className = '' }: React.PropsWithChildren<{
+    className?: string
+}>) => {
     return (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-50 text-white rounded-lg w-[60%] border border-gray-700">
+        <div className={`bg-surface/60 backdrop-blur-sm rounded-lg border border-gray-700 ${className}`}>
             {children}
         </div>
     )

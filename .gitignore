@@ -8,3 +8,5 @@ frontend/.vite/
 frontend/dist/
 backend/dist/
 shared/src/generated.ts
+frontend/src/graphql/generated.ts
+backend/src/graphql/generated.ts

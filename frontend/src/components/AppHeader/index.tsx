@@ -17,7 +17,7 @@ const StyledNavLink = ({ to, children }: { to: string, children: React.ReactNode
 
 export const AppHeader = () => {
     return (
-        <HUDPanel>
+        <HUDPanel className="absolute top-4 left-1/2 transform -translate-x-1/2 w-[60%]">
             <div className="flex justify-between items-center gap-3 p-3">
                 <h1 className="text-2xl font-bold text-accent">RiderOS</h1>
                 <div className="flex gap-2">
