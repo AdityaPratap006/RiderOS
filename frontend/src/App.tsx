@@ -1,10 +1,15 @@
+import { Routes, Route } from "react-router";
+import Radar from "./pages/Radar";
+import { AppHeader } from "./components/AppHeader";
+import { APP_ROUTES } from "./configs/routes";
+ 
 export default function App() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-accent">RiderOS</h1>
-        <p className="mt-2 text-slate-400">Jarvis for motorcyclists</p>
-      </div>
+    <div className="relative w-screen h-screen overflow-hidden">
+      <Routes>
+        <Route path={APP_ROUTES.RADAR} element={<Radar />} />
+      </Routes>
+      <AppHeader />
     </div>
   );
 }

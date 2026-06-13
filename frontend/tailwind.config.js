@@ -6,7 +6,7 @@ export default {
       colors: {
         surface: '#0f172a',
         panel: '#1e293b',
-        accent: '#f97316',
+        accent: '#2ffffc',
       },
     },
   },
