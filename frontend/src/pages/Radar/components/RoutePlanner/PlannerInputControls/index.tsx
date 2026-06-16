@@ -1,39 +1,56 @@
-import { useCallback, useState } from "react";
-import { TextInput } from "../../../../../components/TextInput";
+import { useCallback } from "react";
 import { useAppStore } from "../../../../../store";
+import { BikeType, PlaceAutocompleteResult } from "../../../../../graphql/generated";
+import { SelectInput } from "../../../../../components/SelectInput";
+import PlaceAutocompleteInput from "../../../../../components/PlaceAutocompleteInput";
+import { useShallow } from "zustand/shallow";
+
+const BIKE_TYPES: BikeType[] = Object.values(BikeType);
 
 const PlannerInputControls = () => {
-    const [startLocation, setStartLocation] = useState<string>("");
-    const [endLocation, setEndLocation] = useState<string>("");
 
-    const setPlannedRoute = useAppStore((s) => s.setPlannedRoute);
+    const { setPlannedRoute, startLocation, endLocation, bikeType } = useAppStore(
+        useShallow((s) => ({
+            setPlannedRoute: s.setPlannedRoute,
+            startLocation: s.plannedRoute?.startPlace,
+            endLocation: s.plannedRoute?.endPlace,
+            bikeType: s.plannedRoute?.bikeType,
+        }))
+    );
 
-    const handleStartLocationChange = useCallback((value: string) => {
-        setStartLocation(value);
+    const handleStartLocationChange = useCallback((value: PlaceAutocompleteResult) => {
+        setPlannedRoute({ startPlace: value });
     }, []);
 
-    const handleEndLocationChange = useCallback((value: string) => {
-        setEndLocation(value);
+    const handleEndLocationChange = useCallback((value: PlaceAutocompleteResult) => {
+        setPlannedRoute({ endPlace: value });
+    }, []);
+
+    const handleBikeTypeChange = useCallback((value: BikeType) => {
+        setPlannedRoute({ bikeType: value });
     }, []);
 
     const handleSubmit = useCallback(() => {
-        if (!startLocation.trim() || !endLocation.trim()) return;
-        setPlannedRoute({ startPlace: startLocation, endPlace: endLocation, bikeType: '' });
-    }, [startLocation, endLocation, setPlannedRoute]);
+        if (!startLocation || !endLocation) return;
+        setPlannedRoute({ startPlace: startLocation, endPlace: endLocation, bikeType: bikeType });
+    }, [startLocation, endLocation, bikeType, setPlannedRoute]);
 
     return (
         <div className="flex flex-col gap-4 justify-start items-start">
-            <TextInput
+            <PlaceAutocompleteInput
                 inputName="Start Location"
-                placeholder="Enter start location"
-                value={startLocation}
-                onChange={handleStartLocationChange}
+                onSelect={handleStartLocationChange}
             />
-            <TextInput
+            <PlaceAutocompleteInput
                 inputName="End Location"
-                placeholder="Enter end location"
-                value={endLocation}
-                onChange={handleEndLocationChange}
+                onSelect={handleEndLocationChange}
+            />
+            <SelectInput
+                inputName="Bike Type"
+                options={BIKE_TYPES}
+                value={bikeType}
+                onChange={(value) => handleBikeTypeChange(value as BikeType)}
+                placeholder="Select bike type"
             />
             <button
                 onClick={handleSubmit}

@@ -1,5 +1,6 @@
 import { supabase } from '../db/supabase';
-import { geocode, getRoute } from '../lib/routing';
+import { BikeType } from '../graphql/generated';
+import { getRoute } from '../lib/routing';
 import { getWeather } from '../lib/weather';
 import { rankPOIs } from '../lib/groq';
 import {
@@ -14,23 +15,23 @@ import {
 } from '../lib/scoring';
 
 // Fitness profile for each bike type — drives score adjustments in adverse conditions
-const BIKE_TYPE_FIT: Record<string, BikeTypeFit> = {
-  SUPERSPORT:               { surface_preference: 'tarmac',   weather_tolerance: 'low',    hazard_tolerance: 'low'    },
-  SPORT_NAKED:              { surface_preference: 'tarmac',   weather_tolerance: 'low',    hazard_tolerance: 'low'    },
-  ADVENTURE_TOURER_OFFROAD: { surface_preference: 'off-road', weather_tolerance: 'high',   hazard_tolerance: 'high'   },
-  ADVENTURE_TOURER_HIGHWAY: { surface_preference: 'mixed',    weather_tolerance: 'high',   hazard_tolerance: 'medium' },
-  COMMUTER:                 { surface_preference: 'tarmac',   weather_tolerance: 'medium', hazard_tolerance: 'medium' },
-  SUPERMOTO:                { surface_preference: 'mixed',    weather_tolerance: 'medium', hazard_tolerance: 'high'   },
-  ENDURO:                   { surface_preference: 'off-road', weather_tolerance: 'high',   hazard_tolerance: 'high'   },
-  CRUISER:                  { surface_preference: 'tarmac',   weather_tolerance: 'medium', hazard_tolerance: 'low'    },
-  NEO_RETRO:                { surface_preference: 'tarmac',   weather_tolerance: 'low',    hazard_tolerance: 'low'    },
-  SCRAMBLER:                { surface_preference: 'mixed',    weather_tolerance: 'medium', hazard_tolerance: 'medium' },
-  HYPER_TOURER:             { surface_preference: 'tarmac',   weather_tolerance: 'high',   hazard_tolerance: 'medium' },
+const BIKE_TYPE_FIT: Record<BikeType, BikeTypeFit> = {
+  [BikeType.Supersport]: { surface_preference: 'tarmac', weather_tolerance: 'low', hazard_tolerance: 'low' },
+  [BikeType.SportNaked]: { surface_preference: 'tarmac', weather_tolerance: 'low', hazard_tolerance: 'low' },
+  [BikeType.AdventureTourerOffroad]: { surface_preference: 'off-road', weather_tolerance: 'high', hazard_tolerance: 'high' },
+  [BikeType.AdventureTourerHighway]: { surface_preference: 'mixed', weather_tolerance: 'high', hazard_tolerance: 'medium' },
+  [BikeType.Commuter]: { surface_preference: 'tarmac', weather_tolerance: 'medium', hazard_tolerance: 'medium' },
+  [BikeType.Supermoto]: { surface_preference: 'mixed', weather_tolerance: 'medium', hazard_tolerance: 'high' },
+  [BikeType.Enduro]: { surface_preference: 'off-road', weather_tolerance: 'high', hazard_tolerance: 'high' },
+  [BikeType.Cruiser]: { surface_preference: 'tarmac', weather_tolerance: 'medium', hazard_tolerance: 'low' },
+  [BikeType.NeoRetro]: { surface_preference: 'tarmac', weather_tolerance: 'low', hazard_tolerance: 'low' },
+  [BikeType.Scrambler]: { surface_preference: 'mixed', weather_tolerance: 'medium', hazard_tolerance: 'medium' },
+  [BikeType.HyperTourer]: { surface_preference: 'tarmac', weather_tolerance: 'high', hazard_tolerance: 'medium' },
 };
 
 async function fetchHazards(
   startLat: number, startLng: number,
-  endLat: number,   endLng: number
+  endLat: number, endLng: number
 ): Promise<HazardData[]> {
   const { data, error } = await supabase
     .from('hazard_reports')
@@ -47,29 +48,25 @@ async function fetchHazards(
   }
 
   return (data ?? []).map(row => ({
-    id:          row.id,
-    hazardType:  row.hazard_type,
-    severity:    row.severity as HazardData['severity'],
-    lat:         row.lat,
-    lng:         row.lng,
+    id: row.id,
+    hazardType: row.hazard_type,
+    severity: row.severity as HazardData['severity'],
+    lat: row.lat,
+    lng: row.lng,
     description: row.description,
-    reportedAt:  row.reported_at,
+    reportedAt: row.reported_at,
   }));
 }
 
 export async function getRouteReadiness(
   startPlace: string,
+  startEloc: string,
   endPlace: string,
-  bikeType?: string
+  endEloc: string,
+  bikeType?: BikeType
 ) {
-  // Step 1: Geocode both ends in parallel → returns eLoc (Mappls place code)
-  const [startGeo, endGeo] = await Promise.all([
-    geocode(startPlace),
-    geocode(endPlace),
-  ]);
-
-  // Step 2: Route — lat/lng extracted from geometry since geocode returns only eLoc
-  const route = await getRoute(startGeo.eloc, endGeo.eloc);
+  // Step 1: Route using eLocs from autocomplete — geocoding skipped
+  const route = await getRoute(startEloc, endEloc);
 
   // Step 3: Weather + hazards in parallel
   const [weather, hazards] = await Promise.all([
@@ -81,14 +78,14 @@ export async function getRouteReadiness(
   const pois = await rankPOIs(startPlace, endPlace, weather);
 
   // Step 5: Score
-  const weatherFactor  = scoreWeather(weather);
-  const trafficFactor  = scoreTraffic({
-    durationSeconds:          route.durationSeconds,
+  const weatherFactor = scoreWeather(weather);
+  const trafficFactor = scoreTraffic({
+    durationSeconds: route.durationSeconds,
     durationInTrafficSeconds: route.durationInTrafficSeconds,
   });
-  const hazardFactor   = scoreHazards(hazards);
+  const hazardFactor = scoreHazards(hazards);
 
-  const fit      = BIKE_TYPE_FIT[bikeType ?? 'COMMUTER'];
+  const fit = BIKE_TYPE_FIT[bikeType ?? BikeType.SportNaked];
   const adjusted = adjustForBikeType(
     { weather: weatherFactor, hazards: hazardFactor, traffic: trafficFactor },
     fit,
@@ -96,18 +93,18 @@ export async function getRouteReadiness(
   );
 
   const { status, summary } = combineScores(adjusted);
-  const suggestion           = suggestBikeType(hazards, weather);
+  const suggestion = suggestBikeType(hazards, weather);
 
   // Step 6: Assemble RouteReadiness response
   return {
-    overallStatus:     status,
+    overallStatus: status,
     summary,
-    weather:           adjusted.weather,
-    hazards:           adjusted.hazards,
-    traffic:           adjusted.traffic,
-    hazardReports:     hazards,
+    weather: adjusted.weather,
+    hazards: adjusted.hazards,
+    traffic: adjusted.traffic,
+    hazardReports: hazards,
     suggestedBikeType: { bikeType: suggestion.bikeType, reason: suggestion.reason },
-    routeGeometry:     route.geometry,
-    pointsOfInterest:  pois,
+    routeGeometry: route.geometry,
+    pointsOfInterest: pois,
   };
 }

@@ -10,12 +10,14 @@ export const useRouteReadiness = () => {
     const { data, loading, error } = useRouteReadinessQuery({
         variables: plannedRoute
             ? {
-                startPlace: plannedRoute.startPlace,
-                endPlace: plannedRoute.endPlace,
+                startPlace: plannedRoute.startPlace?.placeName ?? '',
+                startEloc: plannedRoute.startPlace?.eLoc ?? '',
+                endPlace: plannedRoute.endPlace?.placeName ?? '',
+                endEloc: plannedRoute.endPlace?.eLoc ?? '',
                 bikeType: (plannedRoute.bikeType as BikeType) || undefined,
             }
             : undefined,
-        skip: !plannedRoute,
+        skip: !plannedRoute?.startPlace?.eLoc || !plannedRoute?.endPlace?.eLoc,
         fetchPolicy: 'cache-and-network',
     });
 

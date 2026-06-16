@@ -78,12 +78,19 @@ type RouteReadiness {
   pointsOfInterest: [PointOfInterest!]!
 }
 
+type PlaceAutocompleteResult {
+  placeName: String!
+  placeAddress: String!
+  eLoc: String!
+}
+
 type Query {
   bikes(bikeType: BikeType): [Bike!]!
   bike(id: ID!): Bike
   rides(region: String, fromDate: String, toDate: String): [Ride!]!
-  routeReadiness(startPlace: String!, endPlace: String!, bikeType: BikeType): RouteReadiness!
+  routeReadiness(startPlace: String!, startEloc: String!, endPlace: String!, endEloc: String!, bikeType: BikeType): RouteReadiness!
   rideSuggestions(lat: Float!, lng: Float!, bikeType: BikeType, date: String): [RouteReadiness!]!
+  placeAutocomplete(input: String!): [PlaceAutocompleteResult!]!
 }
 
 type Mutation {

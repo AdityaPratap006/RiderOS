@@ -13,6 +13,12 @@ const config: CodegenConfig = {
         scalars: { JSON: 'unknown' },
       },
     },
+    '../backend/src/graphql/generated.ts': {
+      plugins: ['typescript', 'typescript-resolvers'],
+      config: {
+        scalars: { JSON: 'unknown' },
+      },
+    },
   },
 };
 
