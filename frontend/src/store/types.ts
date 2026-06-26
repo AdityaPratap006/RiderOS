@@ -7,17 +7,25 @@ export type SelectedItem =
     | { type: 'poi'; id: string }
     | { type: 'ride'; id: string };
 
-export interface PlannedRoute {
-    startPlace: PlaceAutocompleteResult | null;
-    endPlace: PlaceAutocompleteResult | null;
+export interface SubmittedRoute {
+    startPlace: PlaceAutocompleteResult;
+    endPlace: PlaceAutocompleteResult;
     bikeType: BikeType;
 }
 
 export interface RoutePlannerState {
     selectedItem: SelectedItem | null;
     setSelectedItem: (item: SelectedItem | null) => void;
-    plannedRoute: PlannedRoute | null;
-    setPlannedRoute: (values: Partial<PlannedRoute>) => void;
+
+    plannedRouteStart: PlaceAutocompleteResult | null;
+    setPlannedRouteStart: (value: PlaceAutocompleteResult | null) => void;
+    plannedRouteEnd: PlaceAutocompleteResult | null;
+    setPlannedRouteEnd: (value: PlaceAutocompleteResult | null) => void;
+    plannedRouteBikeType: BikeType;
+    setPlannedRouteBikeType: (value: BikeType) => void;
+
+    submittedRoute: SubmittedRoute | null;
+    submitRoute: () => void;
     clearRoute: () => void;
 }
 

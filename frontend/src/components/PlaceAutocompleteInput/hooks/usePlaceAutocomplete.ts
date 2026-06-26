@@ -41,10 +41,17 @@ export const usePlaceAutocomplete = ({ onSelect }: UsePlaceAutocompleteProps) =>
         setTimeout(() => setShowSuggestions(false), 150);
     }, []);
 
+    const onFocus = useCallback(() => {
+        if (searchTerm) {
+            setShowSuggestions(true);
+        }
+    }, []);
+
     return {
         searchTerm,
         onSearch,
         onBlur,
+        onFocus,
         showSuggestions,
         onSelectPlace,
         suggestions: data?.placeAutocomplete ?? [],

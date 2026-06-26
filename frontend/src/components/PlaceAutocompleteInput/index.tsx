@@ -12,6 +12,7 @@ const PlaceAutocompleteInput = ({ inputName, onSelect }: PlaceAutocompleteInputP
         searchTerm,
         onSearch,
         onBlur,
+        onFocus,
         showSuggestions,
         onSelectPlace,
         suggestions,
@@ -33,6 +34,7 @@ const PlaceAutocompleteInput = ({ inputName, onSelect }: PlaceAutocompleteInputP
                 value={searchTerm}
                 onChange={onSearch}
                 onBlur={onBlur}
+                onFocus={onFocus}
             />
             <Suggestions
                 suggestions={suggestions}

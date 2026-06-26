@@ -9,7 +9,7 @@ interface SuggestionsProps {
 
 const Suggestions = ({ suggestions, onSelectPlace, loading, showSuggestions }: SuggestionsProps) => {
 
-    if (!showSuggestions) {
+    if (!showSuggestions || suggestions.length === 0) {
         return null;
     }
 

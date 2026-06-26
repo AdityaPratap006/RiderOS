@@ -1,23 +1,23 @@
 import { useRouteReadinessQuery } from '../graphql/generated';
 import { useAppStore } from '../store';
-import type { BikeType, RouteReadinessQuery } from '../graphql/generated';
+import type { RouteReadinessQuery } from '../graphql/generated';
 
 export type RouteReadinessData = RouteReadinessQuery['routeReadiness'];
 
 export const useRouteReadiness = () => {
-    const plannedRoute = useAppStore((s) => s.plannedRoute);
+    const submittedRoute = useAppStore((s) => s.submittedRoute);
 
     const { data, loading, error } = useRouteReadinessQuery({
-        variables: plannedRoute
+        variables: submittedRoute
             ? {
-                startPlace: plannedRoute.startPlace?.placeName ?? '',
-                startEloc: plannedRoute.startPlace?.eLoc ?? '',
-                endPlace: plannedRoute.endPlace?.placeName ?? '',
-                endEloc: plannedRoute.endPlace?.eLoc ?? '',
-                bikeType: (plannedRoute.bikeType as BikeType) || undefined,
+                startPlace: submittedRoute.startPlace.placeName,
+                startEloc: submittedRoute.startPlace.eLoc,
+                endPlace: submittedRoute.endPlace.placeName,
+                endEloc: submittedRoute.endPlace.eLoc,
+                bikeType: submittedRoute.bikeType,
             }
             : undefined,
-        skip: !plannedRoute?.startPlace?.eLoc || !plannedRoute?.endPlace?.eLoc,
+        skip: !submittedRoute,
         fetchPolicy: 'cache-and-network',
     });
 
