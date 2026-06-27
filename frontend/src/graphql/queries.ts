@@ -9,7 +9,8 @@ export const ROUTE_READINESS_QUERY = gql`
       hazards { score note }
       traffic { score note }
       hazardReports { id hazardType severity lat lng description reportedAt }
-      suggestedBikeType { bikeType reason }
+      suggestedBikes { bikeType reason }
+      bikeFitAnalysis { fit score note }
       routeGeometry
       pointsOfInterest { name type lat lng rating reason }
     }

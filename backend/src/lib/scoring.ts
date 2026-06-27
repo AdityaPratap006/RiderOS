@@ -128,52 +128,154 @@ export function combineScores(adjusted: RawScores): { status: 'good' | 'caution'
 
 import { BikeType } from '../graphql/generated';
 
-export function suggestBikeType(
+export function analyzeBikeFit(
+  bikeType: BikeType,
+  fit: BikeTypeFit,
+  weather: WeatherData,
+  rawScores: { weather: Factor; hazards: Factor }
+): { fit: 'ideal' | 'suitable' | 'manageable' | 'not_recommended'; score: number; note: string } {
+  let score = 100;
+  const concerns: string[] = [];
+
+  const weatherScore = rawScores.weather.score;
+  const hazardScore = rawScores.hazards.score;
+
+  if (fit.weather_tolerance === 'low') {
+    if (weatherScore < 40) {
+      score -= 40;
+      concerns.push('severe weather exceeds this bike\'s weather tolerance');
+    } else if (weatherScore < 70) {
+      score -= 20;
+      concerns.push('weather conditions at the edge of comfort for this bike');
+    }
+  } else if (fit.weather_tolerance === 'medium') {
+    if (weatherScore < 40) {
+      score -= 20;
+      concerns.push('tough weather for this bike profile');
+    } else if (weatherScore < 55) {
+      score -= 10;
+    }
+  }
+
+  if (fit.hazard_tolerance === 'low') {
+    if (hazardScore < 40) {
+      score -= 35;
+      concerns.push('road hazards are significant for a low-hazard-tolerance bike');
+    } else if (hazardScore < 70) {
+      score -= 15;
+      concerns.push('some road hazards present on route');
+    }
+  } else if (fit.hazard_tolerance === 'medium') {
+    if (hazardScore < 40) {
+      score -= 15;
+      concerns.push('notable hazards on route');
+    }
+  }
+
+  if (fit.surface_preference === 'tarmac' && weather.windSpeedKmh > 40) {
+    score -= 20;
+    concerns.push(`crosswinds at ${weather.windSpeedKmh} km/h can unsettle a fully-faired machine`);
+  } else if (fit.surface_preference === 'tarmac' && weather.windSpeedKmh > 25) {
+    score -= 10;
+    concerns.push(`notable wind at ${weather.windSpeedKmh} km/h`);
+  }
+
+  score = Math.max(0, score);
+
+  const fitTier: 'ideal' | 'suitable' | 'manageable' | 'not_recommended' =
+    score >= 85 ? 'ideal' :
+    score >= 65 ? 'suitable' :
+    score >= 40 ? 'manageable' : 'not_recommended';
+
+  const note = concerns.length > 0
+    ? concerns.join('; ')
+    : `${bikeType} is a great match for these conditions`;
+
+  return { fit: fitTier, score, note };
+}
+
+export function suggestBikeTypes(
   hazards: HazardData[],
   weather: WeatherData
-): { bikeType: BikeType; reason: string } {
+): { bikeType: BikeType; reason: string }[] {
   const highHazardCount = hazards.filter(h => h.severity === 'high').length;
-  const anyHazards      = hazards.length > 0;
+  const anyHazards = hazards.length > 0;
 
   if (['thunderstorm', 'snow'].includes(weather.condition)) {
-    return { bikeType: BikeType.AdventureTourerOffroad, reason: 'Extreme weather demands maximum weather protection and ground clearance' };
+    return [
+      { bikeType: BikeType.AdventureTourerOffroad, reason: 'Extreme weather demands maximum weather protection and ground clearance' },
+      { bikeType: BikeType.AdventureTourerHighway, reason: 'Upright ergonomics and weather protection for severe conditions' },
+    ];
   }
 
   if (highHazardCount >= 2) {
-    return { bikeType: BikeType.Enduro, reason: 'Multiple high-severity hazards — a purpose-built off-road machine handles unpredictable surfaces best' };
+    return [
+      { bikeType: BikeType.Enduro, reason: 'Multiple high-severity hazards — built for unpredictable surfaces' },
+      { bikeType: BikeType.AdventureTourerOffroad, reason: 'Off-road capability with added weather protection' },
+    ];
   }
 
   if (['rain', 'fog'].includes(weather.condition) || highHazardCount === 1) {
-    return { bikeType: BikeType.AdventureTourerHighway, reason: 'Upright ergonomics, wind protection, and traction control suit these conditions well' };
+    return [
+      { bikeType: BikeType.AdventureTourerHighway, reason: 'Upright ergonomics, wind protection, and traction control suit these conditions' },
+      { bikeType: BikeType.Commuter, reason: 'Predictable handling and strong braking on wet or hazardous roads' },
+    ];
   }
 
   if (weather.condition === 'drizzle' || weather.visibilityKm < 5) {
-    return { bikeType: BikeType.Commuter, reason: 'Wet or low-visibility roads favour an upright, predictable bike with good braking' };
+    return [
+      { bikeType: BikeType.Commuter, reason: 'Upright and predictable with good braking for damp conditions' },
+      { bikeType: BikeType.Scrambler, reason: 'Agility and compliance on wet mixed surfaces' },
+    ];
   }
 
   if (weather.condition === 'overcast' && anyHazards) {
-    return { bikeType: BikeType.Scrambler, reason: 'Mixed surface hazards with overcast skies — a scrambler balances agility and compliance' };
+    return [
+      { bikeType: BikeType.Scrambler, reason: 'Mixed surface hazards with overcast skies — balances agility and compliance' },
+      { bikeType: BikeType.NeoRetro, reason: 'Forgiving geometry handles road variation comfortably' },
+    ];
   }
 
   if (weather.condition === 'overcast') {
-    return { bikeType: BikeType.Supermoto, reason: 'Overcast but clear roads — a supermoto keeps things agile and fun' };
+    return [
+      { bikeType: BikeType.Supermoto, reason: 'Overcast but clear roads — agile and fun' },
+      { bikeType: BikeType.SportNaked, reason: 'Engaging ride without full-fairing commitment' },
+    ];
   }
 
   if (weather.condition === 'partly_cloudy' && anyHazards) {
-    return { bikeType: BikeType.NeoRetro, reason: 'Good visibility with some road hazards — upright ergonomics and forgiving geometry help' };
+    return [
+      { bikeType: BikeType.NeoRetro, reason: 'Good visibility with road hazards — upright ergonomics and forgiving geometry' },
+      { bikeType: BikeType.Scrambler, reason: 'Handles surface variation with ease' },
+    ];
   }
 
   if (weather.condition === 'partly_cloudy') {
-    return { bikeType: BikeType.SportNaked, reason: 'Great conditions for a sporty, engaging ride without full-fairing commitment' };
+    return [
+      { bikeType: BikeType.SportNaked, reason: 'Great conditions for a sporty, engaging ride' },
+      { bikeType: BikeType.Supersport, reason: 'Partly cloudy skies — still ideal enough to push a full-fairing machine' },
+      { bikeType: BikeType.Supermoto, reason: 'Agile and fun on open roads' },
+      { bikeType: BikeType.Cruiser, reason: 'Relaxed cruise on open roads' },
+    ];
   }
 
   if (weather.condition === 'clear' && weather.windSpeedKmh > 20) {
-    return { bikeType: BikeType.Cruiser, reason: 'Clear skies but notable wind — a cruiser\'s low centre of gravity keeps things stable' };
+    return [
+      { bikeType: BikeType.Cruiser, reason: "Clear skies but notable wind — low centre of gravity keeps things stable" },
+      { bikeType: BikeType.HyperTourer, reason: 'Comfort and stability at speed with wind protection' },
+    ];
   }
 
   if (weather.condition === 'clear' && !anyHazards) {
-    return { bikeType: BikeType.Supersport, reason: 'Perfect conditions — clean tarmac and clear skies, make the most of it' };
+    return [
+      { bikeType: BikeType.Supersport, reason: 'Perfect conditions — clean tarmac and clear skies' },
+      { bikeType: BikeType.SportNaked, reason: 'Engaging ride in ideal weather' },
+      { bikeType: BikeType.Cruiser, reason: 'Relaxed cruise on a perfect day' },
+    ];
   }
 
-  return { bikeType: BikeType.HyperTourer, reason: 'Clear weather with some road variation — comfort and performance in equal measure' };
+  return [
+    { bikeType: BikeType.HyperTourer, reason: 'Clear weather with some road variation — comfort and performance in equal measure' },
+    { bikeType: BikeType.NeoRetro, reason: 'Versatile choice for mixed conditions' },
+  ];
 }

@@ -57,6 +57,12 @@ type BikeSuggestion {
   reason: String!
 }
 
+type BikeFitAnalysis {
+  fit: String!
+  score: Int!
+  note: String!
+}
+
 type PointOfInterest {
   name: String!
   type: String!
@@ -73,7 +79,8 @@ type RouteReadiness {
   hazards: Factor!
   traffic: Factor!
   hazardReports: [HazardReport!]!
-  suggestedBikeType: BikeSuggestion!
+  suggestedBikes: [BikeSuggestion!]!
+  bikeFitAnalysis: BikeFitAnalysis
   routeGeometry: JSON!
   pointsOfInterest: [PointOfInterest!]!
 }

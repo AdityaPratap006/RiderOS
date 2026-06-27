@@ -37,10 +37,12 @@ const PlannerInputControls = () => {
             <PlaceAutocompleteInput
                 inputName="Start Location"
                 onSelect={handleStartLocationChange}
+                value={plannedRouteStart}
             />
             <PlaceAutocompleteInput
                 inputName="End Location"
                 onSelect={handleEndLocationChange}
+                value={plannedRouteEnd}
             />
             <SelectInput
                 inputName="Bike Type"

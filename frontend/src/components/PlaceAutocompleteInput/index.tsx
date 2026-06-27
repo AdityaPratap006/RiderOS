@@ -5,9 +5,10 @@ import Suggestions from "./Suggestions";
 interface PlaceAutocompleteInputProps {
     inputName?: string;
     onSelect: (place: PlaceAutocompleteResult) => void;
+    value?: PlaceAutocompleteResult | null;
 }
 
-const PlaceAutocompleteInput = ({ inputName, onSelect }: PlaceAutocompleteInputProps) => {
+const PlaceAutocompleteInput = ({ inputName, onSelect, value }: PlaceAutocompleteInputProps) => {
     const {
         searchTerm,
         onSearch,
@@ -18,7 +19,7 @@ const PlaceAutocompleteInput = ({ inputName, onSelect }: PlaceAutocompleteInputP
         suggestions,
         autocompleteLoading,
         autocompleteError
-    } = usePlaceAutocomplete({ onSelect });
+    } = usePlaceAutocomplete({ onSelect, value });
 
 
 

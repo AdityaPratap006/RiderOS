@@ -9,7 +9,8 @@ import {
   scoreHazards,
   adjustForBikeType,
   combineScores,
-  suggestBikeType,
+  suggestBikeTypes,
+  analyzeBikeFit,
   HazardData,
   BikeTypeFit,
 } from '../lib/scoring';
@@ -93,7 +94,10 @@ export async function getRouteReadiness(
   );
 
   const { status, summary } = combineScores(adjusted);
-  const suggestion = suggestBikeType(hazards, weather);
+  const suggestedBikes = suggestBikeTypes(hazards, weather);
+  const bikeFitAnalysis = bikeType
+    ? analyzeBikeFit(bikeType, fit, weather, { weather: weatherFactor, hazards: hazardFactor })
+    : null;
 
   // Step 6: Assemble RouteReadiness response
   return {
@@ -103,7 +107,8 @@ export async function getRouteReadiness(
     hazards: adjusted.hazards,
     traffic: adjusted.traffic,
     hazardReports: hazards,
-    suggestedBikeType: { bikeType: suggestion.bikeType, reason: suggestion.reason },
+    suggestedBikes,
+    bikeFitAnalysis,
     routeGeometry: route.geometry,
     pointsOfInterest: pois,
   };

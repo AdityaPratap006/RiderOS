@@ -1,18 +1,29 @@
-import { ChangeEvent, useCallback, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useState } from "react";
 import { useDebouncedValue } from "../../../hooks/useDebouncedValue";
 import { PlaceAutocompleteResult, usePlaceAutocompleteQuery } from "../../../graphql/generated";
 
 interface UsePlaceAutocompleteProps {
     onSelect: (place: PlaceAutocompleteResult) => void;
+    value?: PlaceAutocompleteResult | null;
 }
 
-export const usePlaceAutocomplete = ({ onSelect }: UsePlaceAutocompleteProps) => {
-    const [searchTerm, setSearchTerm] = useState("");
+export const usePlaceAutocomplete = ({ onSelect, value }: UsePlaceAutocompleteProps) => {
+    const initialDisplay = value ? `${value.placeName}, ${value.placeAddress}` : "";
+    const [searchTerm, setSearchTerm] = useState(initialDisplay);
+    const [isCommitted, setIsCommitted] = useState(!!value);
+
+    useEffect(() => {
+        if (!value) {
+            setSearchTerm("");
+            setIsCommitted(false);
+            setShowSuggestions(false);
+        }
+    }, [value]);
     const debouncedSearchTerm = useDebouncedValue(searchTerm, 300);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const { data, loading, error } = usePlaceAutocompleteQuery({
         variables: { input: debouncedSearchTerm },
-        skip: debouncedSearchTerm.length === 0,
+        skip: debouncedSearchTerm.length === 0 || isCommitted,
         onCompleted: (data) => {
             if (data.placeAutocomplete.length > 0) {
                 setShowSuggestions(true);
@@ -26,15 +37,16 @@ export const usePlaceAutocomplete = ({ onSelect }: UsePlaceAutocompleteProps) =>
         },
     });
 
-
     const onSearch = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+        setIsCommitted(false);
         setSearchTerm(e.target.value);
     }, []);
 
     const onSelectPlace = useCallback((place: PlaceAutocompleteResult) => {
+        setIsCommitted(true);
+        setShowSuggestions(false);
         onSelect(place);
         setSearchTerm(place.placeName + ", " + place.placeAddress);
-        setShowSuggestions(false);
     }, [onSelect]);
 
     const onBlur = useCallback(() => {
@@ -42,10 +54,10 @@ export const usePlaceAutocomplete = ({ onSelect }: UsePlaceAutocompleteProps) =>
     }, []);
 
     const onFocus = useCallback(() => {
-        if (searchTerm) {
+        if (searchTerm && (data?.placeAutocomplete?.length ?? 0) > 0) {
             setShowSuggestions(true);
         }
-    }, []);
+    }, [searchTerm, data]);
 
     return {
         searchTerm,

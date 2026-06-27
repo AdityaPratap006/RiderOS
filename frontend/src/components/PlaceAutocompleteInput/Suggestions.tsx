@@ -14,7 +14,7 @@ const Suggestions = ({ suggestions, onSelectPlace, loading, showSuggestions }: S
     }
 
     return (
-        <div className="absolute top-[80px] z-10 w-full bg-gray-800 border border-accent/60 rounded max-h-60 overflow-y-auto">
+        <div className="absolute top-full mt-1 z-10 w-full bg-gray-800 border border-accent/60 rounded max-h-60 overflow-y-auto">
             {loading && <>...searching</>}
             {suggestions.map(suggestion => (
                 <div

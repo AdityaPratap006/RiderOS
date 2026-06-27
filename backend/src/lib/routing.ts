@@ -42,7 +42,7 @@ export const getRoute = async (
   startCoord: { lat: number; lng: number };
   endCoord: { lat: number; lng: number };
 }> => {
-  const url = `https://route.mappls.com/route/direction/route_adv/biking/${startEloc};${endEloc}?geometries=geojson&overview=full&access_token=${MAPPLS_KEY}`;
+  const url = `https://route.mappls.com/route/direction/route_adv/biking/${startEloc};${endEloc}?geometries=geojson&overview=full&exclude=ferry&access_token=${MAPPLS_KEY}`;
   const res = await fetch(url);
 
   if (!res.ok) {
